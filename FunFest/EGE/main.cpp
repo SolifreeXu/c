@@ -1,6 +1,5 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<time.h>
 #include"Engine.h"
 
 #pragma comment(linker,"/NODEFAULTLIB:libcpmt.lib")
@@ -54,12 +53,12 @@ void game()
 	startTime = time(NULL);	//获取系统时间作为游戏开始时间
 	while (timeLeft > 0)	//判断游戏是否还有剩余时间
 	{
-		while (clear() != 0);	//判断是否有可以消除的地方，返回0表示没有可消除的地方
+		while (clear() != 0)	//判断是否有可以消除的地方，返回0表示没有可消除的地方
 			fill();	//消掉过后填满色块
 		if (play() == ESC)	//进行人为操作
 			return;	//如果返回消息是ESC，退出游戏过程
-		_sleep(1);	//暂停1毫秒
-		displayInfo();	//显示游戏信息
+		delay_jfps(200);	//平均延迟1000/fps毫秒，用于稳定逻辑帧率控制，绘图带跳帧，这里的fps即200
+		displayInfo();
 		endTime = time(NULL);	//获取系统时间作为本次循环结束时间
 		timeLeft -= (endTime - startTime);	//计算本次循环后剩余时间
 		startTime = endTime;	//将本次循环结束时间设置为接下来循环的开始时间
