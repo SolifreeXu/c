@@ -46,9 +46,9 @@ void draw()
 	for (int j = 0; j < MAP_SIZE; ++j)
 		//在屏幕上以透明方式绘制指定图像（如果map[i][j]==0，没有对应的图，不会贴出来）
 		putimage_transparent(NULL, img[map[i][j]], COLOR_BLOCK_PIXELS * i + MAP_X, COLOR_BLOCK_PIXELS * j + MAP_Y, BLACK);
-	displayInfo();	//显示游戏信息
 	putimage_transparent(NULL, leave, 25, 360, BLACK);	//显示退出游戏通道
-	delay_fps(10);	//平均延迟1000/fps毫秒，用于稳定帧率控制，这里fps即10
+	displayInfo();	//显示游戏信息
+	delay_jfps(10);	//平均延迟1000/fps毫秒，用于稳定逻辑帧率控制，绘图带跳帧，这里fps即10
 }
 
 //填充消掉的色块
@@ -115,6 +115,8 @@ int play()
 				draw();	//绘制界面
 			}
 		}
+		else
+			return 0;
 	}
 	else
 		return 0;
@@ -123,8 +125,7 @@ int play()
 	y1 = (msg1.y - MAP_Y) / COLOR_BLOCK_PIXELS;
 	x2 = (msg2.x - MAP_X) / COLOR_BLOCK_PIXELS;
 	y2 = (msg2.y - MAP_Y) / COLOR_BLOCK_PIXELS;
-	if (msg1.x != -COLOR_BLOCK_PIXELS && msg2.x != -COLOR_BLOCK_PIXELS)	//完成一次交换操作
-		msg1.x = msg1.y = msg2.x = msg2.y = -COLOR_BLOCK_PIXELS;	//让鼠标位置消息恢复到原始状态
+	msg1.x = msg1.y = msg2.x = msg2.y = -COLOR_BLOCK_PIXELS;	//达到一次交换条件，让鼠标位置消息恢复到原始状态
 	//超出色块矩阵界限或者上下左右均不相邻，直接退出
 	if (x1 > 8 || y1 > 8 || x2 > 8 || y2 > 8\
 		|| !(abs((x1 + y1) - (x2 + y2)) == 1 && (x1 == x2 || y1 == y2)))
