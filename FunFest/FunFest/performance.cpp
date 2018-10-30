@@ -1,5 +1,3 @@
-#include <stdlib.h>
-#include <time.h>
 #include "performance.h"
 
 PIMAGE img[COLOR_BLOCKS_NUMBER + 1];	// 图片指针数组，存放加载图片的地址
@@ -14,16 +12,30 @@ static int clicksNumber;	// 鼠标点击次数，控制色块的消除规则
 // 初始化游戏环境
 void initEnviron()
 {
-	srand((unsigned)time(NULL));	// 设置随机数种子
+	randomize();	// 初始化随机数种子
 	score = 0;	// 得分清零
 	leftTime = INITIAL_TIME;	// 初始剩余时间
 	// 给数组赋值，初始化地图状态
 	for (int i = 0; i < MAP_SIZE; ++i)
 	for (int j = 0; j < MAP_SIZE; ++j)
-		map[i][j] = rand() % COLOR_BLOCKS_NUMBER + 1;	// rand获取随机数，取得的数是整型
+		map[i][j] = random(COLOR_BLOCKS_NUMBER) + 1;	// random获取整型随机数
 	// 鼠标消息位置初始为-COLOR_BLOCK_PIXELS，方便判断是否产生有效鼠标消息
 	msg1.x = msg1.y = msg2.x = msg2.y = -COLOR_BLOCK_PIXELS;
 	clicksNumber = 0;	// 初始鼠标点击次数
+}
+
+// 游戏结局画面
+void displayEnd()
+{
+	if (score < SCORE_UPPER_LIMIT)
+		sprintf(szBuffer, "The final score is %d", score);	// 将最终得分提示写入缓冲区
+	else
+		strcpy(szBuffer, "Congratulations!");
+	int len = strlen(szBuffer) * 18;	// 计算提示信息长度
+	setfillcolor(WHITE);	// 设置当前填充颜色
+	bar(0, (WINDOW_HEIGHT - 50) / 2, WINDOW_WIDTH, (WINDOW_HEIGHT - 50) / 2 + 50);	// 绘制矩形
+	rectprintf((WINDOW_WIDTH - len) / 2, (WINDOW_HEIGHT - 36) / 2, len, 36, szBuffer);	// 输出最终得分提示
+	delay_jfps(300);
 }
 
 // 显示游戏信息
@@ -35,10 +47,11 @@ void displayInfo()
 	// 打印时间
 	putimage_transparent(NULL, timeZone, 25, 190, BLACK);
 	rectprintf(58, 220, 36, 40, "%2.0lf", leftTime);
+	delay_jfps(300);	// 平均延迟1000/fps毫秒，用于稳定逻辑帧率控制，绘图带跳帧，这里fps即200
 }
 
 // 绘图（资源可导入rc文件）
-void draw()
+void render()
 {
 	cleardevice();	// 清屏
 	putimage(0, 0, background);	// 画地图背景
@@ -48,7 +61,6 @@ void draw()
 		putimage_transparent(NULL, img[map[i][j]], COLOR_BLOCK_PIXELS * i + MAP_X, COLOR_BLOCK_PIXELS * j + MAP_Y, BLACK);
 	putimage_transparent(NULL, leaveChannel, 25, 360, BLACK);	// 显示退出游戏通道
 	displayInfo();	// 显示游戏信息
-	delay_jfps(10);	// 平均延迟1000/fps毫秒，用于稳定逻辑帧率控制，绘图带跳帧，这里fps即10
 }
 
 // 填充消掉的色块
@@ -61,11 +73,12 @@ void fill()
 		{
 			while (map[i][j] == 0)	// 判断当前位置是否为空
 			{
+				delay_jfps(10);
 				// 色块往下掉
 				for (int k = j; k > 0; --k)
 					map[i][k] = map[i][k - 1];
-				map[i][0] = rand() % COLOR_BLOCKS_NUMBER + 1;	// 最上面一行的空位置随机产生色块
-				draw();	// 每次色块变化后，绘制出当前地图
+				map[i][0] = random(COLOR_BLOCKS_NUMBER) + 1;	// 最上面一行的空位置随机产生色块
+				render();	// 每次色块变化后，绘制出当前地图
 			}
 		}
 	}
@@ -95,6 +108,7 @@ int play()
 		x2 = x1 + COLOR_BLOCK_PIXELS;
 		y2 = y1 + COLOR_BLOCK_PIXELS;
 		rectangle(x1, y1, x2, y2);	// 绘制空心矩形，提示用户第一次点击的色块
+		delay_jfps(300);
 		msg1 = msg;
 		return 1;	// 返回，等待用户下一次点击色块
 	}
@@ -102,7 +116,7 @@ int play()
 	{
 		msg2 = msg;
 		clicksNumber = 0;	// 已完成鼠标两次点击操作，恢复初始状态
-		draw();	// 绘制界面
+		render();	// 绘制界面
 	}
 	// 界面坐标映射成色块矩阵下标
 	x1 = (msg1.x - MAP_X) / COLOR_BLOCK_PIXELS;
@@ -114,26 +128,12 @@ int play()
 	if (!adjacent(x1, y1, x2, y2))
 		return -1;
 	swap(&map[x1][y1], &map[x2][y2]);	// 交换两色块位置
-	draw();	// 绘制色块位置交换后的地图
-	if (clear() == 0)	// 交换之后，返回0说明没有消除色块
+	render();	// 绘制色块位置交换后的地图
+	if (count() == 0)	// 交换之后，返回0说明没有消除色块
 	{
+		delay_jfps(10);
 		swap(&map[x1][y1], &map[x2][y2]);	// 再次交换回去
-		draw();	// 并且绘制出交换后的地图
+		render();	// 并且绘制出交换后的地图
 	}
-	else	// 不等于0，有消除部分
-		fill();	// 填充消去的部分
 	return 2;
-}
-
-// 游戏结局画面
-void displayEnd()
-{
-	if (score < SCORE_UPPER_LIMIT)
-		sprintf(szBuffer, "The final score is %d", score);	// 将最终得分提示写入缓冲区
-	else
-		strcpy(szBuffer, "Congratulations!");
-	int len = strlen(szBuffer) * 18;	// 计算提示信息长度
-	setfillcolor(WHITE);	// 设置当前填充颜色
-	bar(0, (WINDOW_HEIGHT - 50) / 2, WINDOW_WIDTH, (WINDOW_HEIGHT - 50) / 2 + 50);	// 绘制矩形
-	rectprintf((WINDOW_WIDTH - len) / 2, (WINDOW_HEIGHT - 36) / 2, len, 36, szBuffer);	// 输出最终得分提示
 }

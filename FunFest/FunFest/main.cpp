@@ -45,23 +45,31 @@ void closeGame()
 // 游戏过程
 void game()
 {
-	draw();	// 显示开局地图
+	render();	// 显示开局地图
 	// 地图处理（没有空位置，不能消除）
+	while (count() != 0)	// 判断是否有消除的色块，返回0说明未消除色块
+	{
+		erase();	// 消除色块
+		fill();	// 消掉过后填满色块
+	}
 	static double startTime, endTime;	// 每次循环计时的开始时间与结束时间
 	startTime = fclock();	// 获取系统时间作为游戏开始时间
 	while (!gameOver())	// 判断游戏是否未结束
 	{
-		while (clear() != 0)	// 判断是否有消除的色块，返回0说明未消除色块
-			fill();	// 消掉过后填满色块
 		if (play() == ESC)	// 进行人为操作
 			return;	// 如果返回消息是ESC，退出游戏过程
-		delay_jfps(200);	// 平均延迟1000/fps毫秒，用于稳定逻辑帧率控制，绘图带跳帧，这里fps即200
+		while (count() != 0)	// 判断是否有消除的色块，返回0说明未消除色块
+		{
+			erase();	// 消除色块
+			update();	// 更新信息
+			fill();	// 消掉过后填满色块
+		}
 		endTime = fclock();	// 获取系统时间作为本次循环结束时间
 		decreaseTime(endTime - startTime);	// 计算本次循环后剩余时间
 		startTime = endTime;	// 将本次循环结束时间设置为接下来循环的开始时间
 		displayInfo();
 	}
-	draw();	// 绘制游戏结局场景
+	render();	// 绘制游戏结局场景
 	displayEnd();	// 显示游戏结局画面
 	delay_ms(1000);	// 暂停1000ms
 }

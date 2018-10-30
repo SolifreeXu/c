@@ -22,7 +22,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B34FE302-D740-4168-B9CA-BA79D3700E95}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>EGE</RootNamespace>
+    <RootNamespace>FunFest</RootNamespace>
     <ProjectName>FunFest</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

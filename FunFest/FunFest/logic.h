@@ -25,7 +25,9 @@ extern int map[MAP_SIZE + 1][MAP_SIZE + 1];	// 游戏色块矩阵
 extern unsigned score;	// 游戏得分
 extern double leftTime;	// 游戏剩余时间
 
-int clear();	// 消除色块
+int count();	// 统计消除色块总数
+void erase();	// 消除色块
+void update();	// 更新信息
 
 /*
 *	函数名：交换数（异或）

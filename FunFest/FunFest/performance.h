@@ -12,10 +12,10 @@ extern PIMAGE leaveChannel;	// 退出通道图片指针
 extern char szBuffer[BUFSIZ];	// 游戏字符串专用缓冲区
 
 void initEnviron();	// 初始化游戏引擎
+void displayEnd();	// 游戏结局画面
 void displayInfo();	// 显示游戏信息
-void draw();	// 绘图
+void render();	// 绘图
 void fill();	// 填充消掉的色块
 int play();	// 玩家控制部分
-void displayEnd();	// 游戏结局画面
 
 #endif
