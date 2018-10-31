@@ -9,6 +9,13 @@ char szBuffer[BUFSIZ];	// 游戏字符串专用缓冲区
 static mouse_msg msg, msg1, msg2;	// mouse_msg鼠标消息结构体变量
 static int clicksNumber;	// 鼠标点击次数，控制色块的消除规则
 
+// 初始鼠标消息位置
+inline void initMouseMsg()
+{
+	// 鼠标消息位置初始为-COLOR_BLOCK_PIXELS，方便判断是否产生有效鼠标消息
+	msg1.x = msg1.y = msg2.x = msg2.y = -COLOR_BLOCK_PIXELS;
+}
+
 // 初始化游戏环境
 void initEnviron()
 {
@@ -19,8 +26,7 @@ void initEnviron()
 	for (int i = 0; i < MAP_SIZE; ++i)
 	for (int j = 0; j < MAP_SIZE; ++j)
 		map[i][j] = random(COLOR_BLOCKS_NUMBER) + 1;	// random获取整型随机数
-	// 鼠标消息位置初始为-COLOR_BLOCK_PIXELS，方便判断是否产生有效鼠标消息
-	msg1.x = msg1.y = msg2.x = msg2.y = -COLOR_BLOCK_PIXELS;
+	initMouseMsg();	// 初始鼠标消息位置
 	clicksNumber = 0;	// 初始鼠标点击次数
 }
 
@@ -35,7 +41,7 @@ void displayEnd()
 	setfillcolor(WHITE);	// 设置当前填充颜色
 	bar(0, (WINDOW_HEIGHT - 50) / 2, WINDOW_WIDTH, (WINDOW_HEIGHT - 50) / 2 + 50);	// 绘制矩形
 	rectprintf((WINDOW_WIDTH - len) / 2, (WINDOW_HEIGHT - 36) / 2, len, 36, szBuffer);	// 输出最终得分提示
-	delay_jfps(300);
+	delay_jfps(300);	// 平均延迟1000/fps毫秒，用于稳定逻辑帧率控制，绘图带跳帧，这里fps即300
 }
 
 // 显示游戏信息
@@ -47,7 +53,7 @@ void displayInfo()
 	// 打印时间
 	putimage_transparent(NULL, timeZone, 25, 190, BLACK);
 	rectprintf(58, 220, 36, 40, "%2.0lf", leftTime);
-	delay_jfps(300);	// 平均延迟1000/fps毫秒，用于稳定逻辑帧率控制，绘图带跳帧，这里fps即200
+	delay_jfps(300);
 }
 
 // 绘图（资源可导入rc文件）
@@ -84,6 +90,18 @@ void fill()
 	}
 }
 
+// 点坐标是否位于矩形块内
+inline int contain(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY)
+{
+	return dstX > srcX && dstX < srcX + srcWidth && dstY > srcY && dstY < srcY + srcHeight;
+}
+
+// 鼠标点击位置转换为色块矩阵下标
+inline int positionToIndex(int position, int startingPosition)
+{
+	return (position - startingPosition) / COLOR_BLOCK_PIXELS;
+}
+
 // 玩家控制部分
 int play()
 {
@@ -103,8 +121,8 @@ int play()
 	if (clicksNumber == 1)	// 第一次点击
 	{
 		// 计算鼠标点击的色块四角的坐标
-		x1 = (msg.x - MAP_X) / COLOR_BLOCK_PIXELS * COLOR_BLOCK_PIXELS + MAP_X;
-		y1 = (msg.y - MAP_Y) / COLOR_BLOCK_PIXELS * COLOR_BLOCK_PIXELS + MAP_Y;
+		x1 = msg.x - (msg.x - MAP_X) % COLOR_BLOCK_PIXELS;
+		y1 = msg.y - (msg.y - MAP_Y) % COLOR_BLOCK_PIXELS;
 		x2 = x1 + COLOR_BLOCK_PIXELS;
 		y2 = y1 + COLOR_BLOCK_PIXELS;
 		rectangle(x1, y1, x2, y2);	// 绘制空心矩形，提示用户第一次点击的色块
@@ -119,11 +137,11 @@ int play()
 		render();	// 绘制界面
 	}
 	// 界面坐标映射成色块矩阵下标
-	x1 = (msg1.x - MAP_X) / COLOR_BLOCK_PIXELS;
-	y1 = (msg1.y - MAP_Y) / COLOR_BLOCK_PIXELS;
-	x2 = (msg2.x - MAP_X) / COLOR_BLOCK_PIXELS;
-	y2 = (msg2.y - MAP_Y) / COLOR_BLOCK_PIXELS;
-	msg1.x = msg1.y = msg2.x = msg2.y = -COLOR_BLOCK_PIXELS;	// 达到一次交换条件，让鼠标位置消息恢复到原始状态
+	x1 = positionToIndex(msg1.x, MAP_X);
+	y1 = positionToIndex(msg1.y, MAP_Y);
+	x2 = positionToIndex(msg2.x, MAP_X);
+	y2 = positionToIndex(msg2.y, MAP_Y);
+	initMouseMsg();	// 达到一次交换条件，让鼠标消息位置恢复到原始状态
 	// 上下左右均不相邻，直接退出
 	if (!adjacent(x1, y1, x2, y2))
 		return -1;
@@ -131,7 +149,7 @@ int play()
 	render();	// 绘制色块位置交换后的地图
 	if (count() == 0)	// 交换之后，返回0说明没有消除色块
 	{
-		delay_jfps(10);
+		delay_ms(100);
 		swap(&map[x1][y1], &map[x2][y2]);	// 再次交换回去
 		render();	// 并且绘制出交换后的地图
 	}

@@ -46,16 +46,10 @@ inline void swap(int *left, int *right)
 	*left ^= *right;
 }
 
-// 点坐标是否位于矩形块内
-inline int contain(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY)
-{
-	return dstX > srcX && dstX < srcX + srcWidth && dstY > srcY && dstY < srcY + srcHeight;
-}
-
 // 两色块在矩阵中是否相邻
-inline int adjacent(int dimen01, int dimen02, int dimen11, int dimen12)
+inline int adjacent(int x1, int y1, int x2, int y2)
 {
-	return abs((dimen01 + dimen02) - (dimen11 + dimen12)) == 1 && (dimen01 == dimen11 || dimen02 == dimen12);
+	return abs((x1 + y1) - (x2 + y2)) == 1 && (x1 == x2 || y1 == y2);
 }
 
 // 用于游戏计时减少剩余时间
