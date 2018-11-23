@@ -23,8 +23,8 @@
 *.lo
 
 # Shared objects (inc. Windows DLLs)
-*.dll
-*.so
+#*.dll
+#*.so
 *.so.*
 *.dylib
 
